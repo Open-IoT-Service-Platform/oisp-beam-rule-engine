@@ -66,7 +66,6 @@ public class PersistRulesTask extends DoFn<KV<String, Map<String, List<Rule>>>, 
                 rulesApi.markRulesSynchronized(getRulesIds(rules.values()));
                 counter++;
                 state.write(counter);
-                System.out.println("Marcel245:" + counter);
                 c.output(counter);
             }
         } catch (InvalidDashboardResponseException e) {

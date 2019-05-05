@@ -79,8 +79,11 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
             observations = c.element();
             //check componentRuleversion/sequence number to trigger rules update if needed
             //Long newComponentRuleVersion = c.sideInput(sideInput).get("ver");
-            Long newComponentRuleVersion = c.sideInput(sideInput).get(0);
-            System.out.println("Marcel293: " + newComponentRuleVersion + " " + componentRuleversion);
+            Long newComponentRuleVersion = c.sideInput(sideInput)
+                    .stream()
+                    .reduce((ver, accum) -> ver > accum ? ver : accum)
+                    .get();
+            System.out.println("Rule update detcted: " + newComponentRuleVersion + " " + componentRuleversion);
             if (newComponentRuleVersion != componentRuleversion) {
                 updateComponentRules();
                 componentRuleversion = newComponentRuleVersion;

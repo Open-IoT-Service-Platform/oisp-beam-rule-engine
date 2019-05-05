@@ -155,7 +155,6 @@ public final class FullPipelineBuilder {
         public void processElement(ProcessContext c) {
             Map<String, Long> map = new HashMap<String, Long>();
             map.put("ver", c.element());
-            System.out.println("Marcel423: " + c.element());
             c.output(map);
         }
     }

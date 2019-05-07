@@ -19,7 +19,7 @@ WORKDIR /app
 
 RUN mvn checkstyle:check pmd:check clean package -Pflink-runner  -DskipTests
 
-FROM flink:1.5.0-scala_2.11-alpine
+FROM flink:1.7.0-scala_2.11-alpine
 EXPOSE 6123 8081
 
 

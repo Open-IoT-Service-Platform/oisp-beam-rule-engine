@@ -83,7 +83,6 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
                     .stream()
                     .reduce((ver, accum) -> ver > accum ? ver : accum)
                     .get();
-            System.out.println("Rule update detcted: " + newComponentRuleVersion + " " + componentRuleversion);
             if (newComponentRuleVersion != componentRuleversion) {
                 updateComponentRules();
                 componentRuleversion = newComponentRuleVersion;

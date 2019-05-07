@@ -72,10 +72,9 @@ public final class FullPipelineBuilder {
         //PCollectionView<Map<String, Long>> kafkaSideInput =
         PCollectionView<List<Long>> kafkaSideInput =
                persistRuleUpdate
-                        .apply(Window.<Long>into(new GlobalWindows())
-                        .triggering(Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane())).discardingFiredPanes())
+                       .apply(Window.<Long>into(new GlobalWindows())
+                                .triggering(Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane())).withAllowedLateness(Duration.standardMinutes(1)).discardingFiredPanes())
                         .apply(Max.longsGlobally())
-                        //.apply(ParDo.of(new LongToMapFn()))
                         .apply(View.asList());
 
         //Observation Pipeline

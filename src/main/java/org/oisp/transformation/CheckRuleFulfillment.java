@@ -9,7 +9,6 @@ import org.oisp.collection.RuleWithRuleConditions;
 import org.oisp.rules.ConditionOperators;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -26,12 +25,13 @@ public class CheckRuleFulfillment extends DoFn<KV<String, RuleWithRuleConditions
         Map<Integer, RuleCondition> ruleConditionMap = rwrc.getRcHash();
         if (mutableRule.getConditionOperator() == ConditionOperators.AND) {
             Boolean result = true;
-            for (int i = 0; i < mutableRule.getConditions().size(); i++) {
-                List<RuleCondition> rcl = mutableRule.getConditions();
-                if (rcl != null && rcl.get(i) != null && rcl.get(i).getFulfilled()) {
-                    mutableRule.getConditions().set(i, rcl.get(i));
+            for (int i = 0; i < rwrc.getRule().getConditions().size(); i++) {
+                RuleCondition currentRc = ruleConditionMap.get(i);
+                if (currentRc != null  && currentRc.getFulfilled()) {
+                    mutableRule.getConditions().add(currentRc);
                 } else {
                     result = false;
+                    break;
                 }
             }
             if (result) {

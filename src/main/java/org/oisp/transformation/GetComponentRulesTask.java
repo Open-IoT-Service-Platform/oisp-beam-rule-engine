@@ -52,10 +52,11 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
 
     @Setup
     public void setup() {
+        System.out.println("Setup of Transform.");
         updateComponentRules();
         componentRuleversion = 0L;
-
     }
+
     public GetComponentRulesTask(Config userConfig, PCollectionView<List<Long>> sideInput) {
         //this(new RulesHbaseRepository(userConfig));
         rulesApi = new DashboardRulesApi(new DashboardConfigProvider(userConfig));

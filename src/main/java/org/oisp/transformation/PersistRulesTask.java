@@ -64,10 +64,10 @@ public class PersistRulesTask extends DoFn<KV<String, Map<String, List<Rule>>>, 
             }
             if (!isRulesEmpty(rules)) {
                 rulesApi.markRulesSynchronized(getRulesIds(rules.values()));
-                counter++;
-                state.write(counter);
-                c.output(counter);
             }
+            counter++;
+            state.write(counter);
+            c.output(counter);
         } catch (InvalidDashboardResponseException e) {
             LOG.error("Unable to mark persisted rules as synchronized in Dashboard", e);
         }

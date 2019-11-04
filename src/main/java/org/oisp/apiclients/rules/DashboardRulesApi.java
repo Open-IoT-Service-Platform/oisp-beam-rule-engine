@@ -22,7 +22,6 @@ import org.oisp.apiclients.CustomRestTemplate;
 import org.oisp.apiclients.DashboardConfig;
 import org.oisp.apiclients.InvalidDashboardResponseException;
 import org.oisp.apiclients.rules.model.ComponentRulesResponse;
-import org.oisp.rules.RuleStatus;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.io.Serializable;
@@ -106,7 +106,11 @@ public class DashboardRulesApi implements RulesApi, Serializable {
         if (synced) {
             syncStatus = RULE_STATUS_SYNCHRONIZED;
         }
-        return new RuleRequest(RuleStatus.asList(), syncStatus);
+        List<String> ruleStatus = new ArrayList<String>();
+        ruleStatus.add("Active");
+        // In the current setup we look only for Active rules
+        // This will change once we have Cassandra to manage changes and only handle unsynced rules
+        return new RuleRequest(ruleStatus, syncStatus);
     }
 
     private String getEndpoint(String restMethod) {

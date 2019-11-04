@@ -3,6 +3,8 @@ package org.oisp.pipeline;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.GenerateSequence;
 import org.apache.beam.sdk.io.kafka.KafkaIO;
 import org.apache.beam.sdk.io.kafka.KafkaRecord;
@@ -60,11 +62,19 @@ public final class FullPipelineBuilder {
         //Detects changes of Ruleset
         //Updates local rule storage
         //Signals rule updates to Observation Pipeline
+        //Will be triggered by frontend by rules-update Kafka channel.
+        //Will be triggered by startup of pipeline
         DownloadRulesTask downloadRulesTask = new DownloadRulesTask(conf);
         PersistRulesTask persistRulesTask = new PersistRulesTask(conf);
         KafkaSourceProcessor rulesKafka = new KafkaSourceRulesUpdateProcessor(conf);
-        PCollection<Long> persistRuleUpdate = p.apply(rulesKafka.getTransform())
+        PCollection<KV<String, String>> initialUpdateTrigger = p.apply(GenerateSequence.from(0).to(1))
+                .apply(ParDo.of(new LongToKVFn()))
+                .setCoder(KvCoder.of(StringUtf8Coder.of(), StringUtf8Coder.of()));
+        PCollection<KV<String, String>> kafkaUpdateTrigger = p.apply(rulesKafka.getTransform())
                 .apply(ParDo.of(new CombineKVFromByteArrayFn()))
+                .setCoder(KvCoder.of(StringUtf8Coder.of(), StringUtf8Coder.of()));
+        PCollectionList<KV<String, String>> updateColl = PCollectionList.of(initialUpdateTrigger).and(kafkaUpdateTrigger);
+        PCollection<Long> persistRuleUpdate = updateColl.apply(Flatten.<KV<String, String>>pCollections())
                 .apply(ParDo.of(downloadRulesTask))
                 .apply(ParDo.of(persistRulesTask));
 
@@ -137,6 +147,14 @@ public final class FullPipelineBuilder {
         @DoFn.ProcessElement
         public void processElement(ProcessContext c) {
             KV<String, String> outputKv = KV.<String, String>of("", "rules-engine");
+            c.output(outputKv);
+        }
+    }
+
+    static class LongToKVFn extends DoFn<Long, KV<String, String>> {
+        @DoFn.ProcessElement
+        public void processElement(ProcessContext c) {
+            KV<String, String> outputKv = KV.<String, String>of("update", Long.toString(c.element()));
             c.output(outputKv);
         }
     }

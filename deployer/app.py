@@ -39,7 +39,7 @@ conf = load_config_from_env("OISP_RULEENGINE_CONFIG")
 token = get_oisp_user_token(f"http://{conf['frontendUri']}/v1/api",
                             conf["username"], conf["password"])
 
-URL = "http://oisp-flink-jobmanager:8081"
+URL = "http://flink-jobmanager-rest:8081"
 ENTRY_CLASS = "org.oisp.RuleEngineBuild"
 CONFIG = {"application_name": "rule_engine_dashboard",
           "dashboard_strict_ssl": False,
@@ -71,6 +71,6 @@ response = requests.post(f"{URL}/jars/{jar_id}/run",
                          json={"entryClass": ENTRY_CLASS,
                                "programArgs": ARGS})
 if response.status_code != 200:
-    print("Could run job, server returned:\n",
+    print("Could not run job, server returned:\n",
           response.request.body.decode("utf-8"), file=stderr)
     exit(1)

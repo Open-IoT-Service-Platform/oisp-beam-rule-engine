@@ -26,6 +26,7 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import org.joda.time.Duration;
+import org.oisp.apiclients.InvalidDashboardResponseException;
 import org.oisp.collection.RuleWithRuleConditions;
 import org.oisp.collection.RulesWithObservation;
 import org.oisp.conf.Config;
@@ -69,8 +70,14 @@ public final class FullPipelineBuilder {
         //Signals rule updates to Observation Pipeline
         //Will be triggered by frontend by rules-update Kafka channel.
         //Will be triggered by startup of pipeline
-        DownloadRulesTask downloadRulesTask = new DownloadRulesTask(conf);
-        PersistRulesTask persistRulesTask = new PersistRulesTask(conf);
+        DownloadRulesTask downloadRulesTask = null;
+        PersistRulesTask persistRulesTask = null;
+        try {
+            downloadRulesTask = new DownloadRulesTask(conf);
+            persistRulesTask = new PersistRulesTask(conf);
+        } catch (InvalidDashboardResponseException e) {
+            LOG.error("Cannot instantiate Dashboard connection of DownloadRulesTask or PersistRulesTask");
+        }
         KafkaSourceProcessor rulesKafka = new KafkaSourceRulesUpdateProcessor(conf);
         PCollection<KV<String, String>> initialUpdateTrigger = p.apply(GenerateSequence.from(0).to(1))
                 .apply(ParDo.of(new LongToKVFn()))
@@ -95,10 +102,19 @@ public final class FullPipelineBuilder {
         //Observation Pipeline
         //Map observations to rules
         //Process rules for Basic, Timebased and Statistics
+        GetComponentRulesTask getComponentRulesTask = null;
+        SendAlertFromRule sendAlertFromRule = null;
+        try {
+            getComponentRulesTask = new GetComponentRulesTask(conf, kafkaSideInput);
+            sendAlertFromRule = new SendAlertFromRule(conf);
+        } catch (InvalidDashboardResponseException e) {
+            LOG.error("Could not instantiate dashboard relationship for getComponentRulesTask or sendAlertFromRule");
+        }
+
         KafkaSourceObservationsProcessor observationsKafka = new KafkaSourceObservationsProcessor(conf);
         PCollection<List<RulesWithObservation>> rwo = p.apply(observationsKafka.getTransform())
                 .apply(ParDo.of(new KafkaToObservationFn()))
-                .apply(ParDo.of(new GetComponentRulesTask(conf, kafkaSideInput))
+                .apply(ParDo.of(getComponentRulesTask)
                 .withSideInputs(kafkaSideInput));
         PCollection<KV<String, RuleWithRuleConditions>> basicRulePipeline =
                 rwo
@@ -118,7 +134,7 @@ public final class FullPipelineBuilder {
                 .apply(Flatten.<KV<String, RuleWithRuleConditions>>pCollections())
                 .apply(ParDo.of(new PersistRuleState()))
                 .apply(ParDo.of(new CheckRuleFulfillment()))
-                .apply(ParDo.of(new SendAlertFromRule(conf)));
+                .apply(ParDo.of(sendAlertFromRule));
 
         //Heartbeat Pipeline
         //Send regular Heartbeat to Kafka topic

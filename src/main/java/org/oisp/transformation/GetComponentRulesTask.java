@@ -57,7 +57,7 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
         componentRuleversion = 0L;
     }
 
-    public GetComponentRulesTask(Config userConfig, PCollectionView<List<Long>> sideInput) {
+    public GetComponentRulesTask(Config userConfig, PCollectionView<List<Long>> sideInput) throws InvalidDashboardResponseException {
         //this(new RulesHbaseRepository(userConfig));
         rulesApi = new DashboardRulesApi(new DashboardConfigProvider(userConfig));
         this.sideInput = sideInput;

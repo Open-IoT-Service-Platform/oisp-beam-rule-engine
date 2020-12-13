@@ -26,6 +26,8 @@ public class ExternalConfig {
     private String hbase_table_prefix;
     private String token;
     private String dashboard_url;
+    private String dashboard_username;
+    private String dashboard_password;
     private Boolean dashboard_strict_ssl;
     private String kafka_servers;
     private String kafka_zookeeper_quorum;
@@ -204,6 +206,22 @@ public class ExternalConfig {
         this.dashboard_strict_ssl = dashboard_strict_ssl;
     }
 
+    public String getDashboard_username() {
+        return dashboard_username;
+    }
+
+    public void setDashboard_username(String dashboard_username) {
+        this.dashboard_username = dashboard_username;
+    }
+
+    public String getDashboard_password() {
+        return dashboard_password;
+    }
+
+    public void setDashboard_password(String dashboard_password) {
+        this.dashboard_password = dashboard_password;
+    }
+
     @Override
     public String toString() {
         String sep = ", ";
@@ -238,25 +256,16 @@ public class ExternalConfig {
 
 
         Config config = new Config()
-                .put(Config.getHbase().ZOOKEEPER_QUORUM, getZookeeper_hbase_quorum())
-                .put(Config.getHbase().TABLE_PREFIX, getHbase_table_prefix())
                 .put(Config.DASHBOARD_TOKEN_PROPERTY, getToken())
                 .put(Config.DASHBOARD_URL_PROPERTY, getDashboard_url())
-                .put(Config.DASHBOARD_STRICT_SSL_VERIFICATION, getDashboard_strict_ssl())
+                .put(Config.DASHBOARD_USERNAME_PROPERTY, getDashboard_username())
+                .put(Config.DASHBOARD_PASSWORD_PROPERTY, getDashboard_password())
                 .put(Config.KAFKA_TOPIC_OBSERVATION_PROPERTY, getKafka_observations_topic())
                 .put(Config.KAFKA_TOPIC_RULES_UPDATE_PROPERTY, getKafka_rule_engine_topic())
                 .put(Config.KAFKA_TOPIC_HEARTBEAT_PROPERTY, getKafka_heartbeat_topic())
                 .put(Config.KAFKA_HEARTBEAT_INTERVAL_PROPERTY, getKafka_heartbeat_interval())
                 .put(Config.KAFKA_URI_PROPERTY, getKafka_servers())
-                .put(Config.KAFKA_ZOOKEEPER_PROPERTY, getKafka_zookeeper_quorum())
-                .put(Config.getHbase().AUTHENTICATION_METHOD, getHadoop_security_authentication())
-                .put(Config.getKbr().KRB_KDC, getKrb_kdc())
-                .put(Config.getKbr().KRB_PASS, getKrb_password())
-                .put(Config.getKbr().KRB_REALM, getKrb_realm())
-                .put(Config.getKbr().KRB_USER, getKrb_user())
-                .put(Config.getKbr().KRB_MASTER_PRINCIPAL, getKrb_master_principal())
-                .put(Config.getKbr().KRB_REGIONSERVER_PRINCIPAL, getKrb_regionserver_principal());
-
+                .put(Config.KAFKA_ZOOKEEPER_PROPERTY, getKafka_zookeeper_quorum());
         return config;
     }
 }

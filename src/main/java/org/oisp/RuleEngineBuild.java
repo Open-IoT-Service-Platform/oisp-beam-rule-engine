@@ -7,6 +7,8 @@ import org.oisp.conf.CmdlineOptions;
 import org.oisp.conf.Config;
 import org.oisp.conf.ExternalConfig;
 import org.oisp.pipeline.FullPipelineBuilder;
+import org.oisp.utils.LogHelper;
+import org.slf4j.Logger;
 
 import java.util.Base64;
 
@@ -18,6 +20,7 @@ import java.util.Base64;
 
 
 public abstract class RuleEngineBuild {
+    private static final Logger LOG = LogHelper.getLogger(RuleEngineBuild.class);
     public static void main(String[] args) {
 
         PipelineOptions options = PipelineOptionsFactory
@@ -28,11 +31,13 @@ public abstract class RuleEngineBuild {
         PipelineOptionsFactory.register(CmdlineOptions.class);
         Pipeline fullPipeline;
 
+        //This is needed to retrieve the full token for testing
+        LOG.info("JSONConfig=" + ((CmdlineOptions) options).getJSONConfig());
         //read json config from ENVIRONMENT - needed because stupid mvn cannot read JSON from cmdline. Unbelievable, but true.
         String inputConfig = ((CmdlineOptions) options).getJSONConfig().replaceAll(" ", "\n");
         String config = new String(Base64.getMimeDecoder().decode(inputConfig));
 
-        System.out.println("JSON config retrieved: " + config);
+        LOG.debug("JSON config retrieved: " + config);
         ExternalConfig extConf = ExternalConfig.getConfigFromString(config);
         Config conf;
         conf = extConf.getConfig();

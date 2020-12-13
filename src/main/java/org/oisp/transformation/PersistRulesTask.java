@@ -45,7 +45,7 @@ public class PersistRulesTask extends DoFn<KV<String, Map<String, List<Rule>>>, 
     private final RulesApi rulesApi;
     private static final Logger LOG = LogHelper.getLogger(PersistRulesTask.class);
 
-    public PersistRulesTask(Config userConfig) {
+    public PersistRulesTask(Config userConfig) throws InvalidDashboardResponseException {
         this(new DashboardRulesApi(new DashboardConfigProvider(userConfig)));
     }
 

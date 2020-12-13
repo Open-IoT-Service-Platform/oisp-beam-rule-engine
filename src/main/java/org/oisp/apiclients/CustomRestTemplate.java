@@ -16,10 +16,7 @@
  */
 package org.oisp.apiclients;
 
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-//import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustStrategy;
 import javax.net.ssl.SSLContext;
@@ -41,16 +38,13 @@ public final class CustomRestTemplate {
     private static final Logger logger = LogHelper.getLogger(CustomRestTemplate.class);
     private final RestTemplate template;
 
-    private CustomRestTemplate(DashboardConfig dashboardConfig) {
-        if (!dashboardConfig.isStrictSSL()) {
-            template = new RestTemplate(createHttpRequestFactory());
-        } else {
-            template = new RestTemplate();
-        }
+    private CustomRestTemplate() {
+
+        template = new RestTemplate(createHttpRequestFactory());
     }
 
-    public static CustomRestTemplate build(DashboardConfig dashboardConfig) {
-        return new CustomRestTemplate(dashboardConfig);
+    public static CustomRestTemplate build() {
+        return new CustomRestTemplate();
     }
 
     public RestTemplate getRestTemplate() {

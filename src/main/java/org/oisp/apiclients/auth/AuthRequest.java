@@ -15,16 +15,26 @@
  *
  */
 
-package org.oisp.conf;
+package org.oisp.apiclients.auth;
 
-public final class HbaseProperties {
+class AuthRequest {
 
-    public static final String ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
-    public static final String TABLE_PREFIX = "hbase.table.prefix";
-    public static final String KERBEROS_AUTHENTICATION = "kerberos";
-    public static final String AUTHENTICATION_METHOD = "hadoop.security.authentication";
-    public static final String HBASE_AUTHENTICATION_METHOD = "hbase.security.authentication";
+    private String username;
+    private String password;
 
-    private HbaseProperties() {
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

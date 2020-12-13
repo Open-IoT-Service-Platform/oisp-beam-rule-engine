@@ -28,6 +28,4 @@ public interface DashboardConfig {
 
     String getToken();
 
-    boolean isStrictSSL();
-
 }

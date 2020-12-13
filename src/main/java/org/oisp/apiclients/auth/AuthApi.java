@@ -15,21 +15,12 @@
  *
  */
 
-package org.oisp.data;
+package org.oisp.apiclients.auth;
 
-import org.oisp.collection.Rule;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.oisp.apiclients.InvalidDashboardResponseException;
 
 
-public interface RulesRepository {
+public interface AuthApi {
 
-    Map<String, List<Rule>> getComponentsRules(String accountId, Set<String> componentsIds) throws IOException;
-
-    void createTable() throws IOException;
-
-    void putRulesAndRemoveNotExistingOnes(Map<String, List<Rule>> componentsRules) throws IOException;
+    String getToken(String username, String password) throws InvalidDashboardResponseException;
 }

@@ -17,41 +17,48 @@
 
 package org.oisp.apiclients;
 
+import org.oisp.apiclients.auth.DashboardAuthApi;
 import org.oisp.conf.Config;
 import java.io.Serializable;
 
 public class DashboardConfigProvider implements DashboardConfig, Serializable {
 
-    private final String token;
-    private final String url;
-    private final boolean strictSSL;
+    private String token;
+    private  String url;
+    private  String username;
+    private  String password;
 
-    public DashboardConfigProvider(Config userConfig) {
+    public DashboardConfigProvider(Config userConfig) throws InvalidDashboardResponseException {
         Object token = userConfig.get(Config.DASHBOARD_TOKEN_PROPERTY);
         Object url = userConfig.get(Config.DASHBOARD_URL_PROPERTY);
-
-        if (token != null) {
-            this.token = token.toString();
-        } else {
-            this.token = null;
-        }
+        Object username = userConfig.get(Config.DASHBOARD_USERNAME_PROPERTY);
+        Object password = userConfig.get(Config.DASHBOARD_PASSWORD_PROPERTY);
 
         if (url != null) {
             this.url = url.toString();
         } else {
-            this.url = null;
+            throw new NullPointerException("Dashboard url is not defined");
         }
 
-        this.strictSSL = parseStrictSSLOption(userConfig);
-    }
+        if (token != null) {
+            this.token = token.toString();
+        } else {
 
-    private Boolean parseStrictSSLOption(Config userConfig) {
-        String strictSSL = userConfig.get(Config.DASHBOARD_STRICT_SSL_VERIFICATION).toString();
-        //By default strictSSL option should be enabled
-        if (strictSSL == null) {
-            return true;
+            if (username != null) {
+                this.username = username.toString();
+            } else {
+                throw new NullPointerException("No token AND no username is defined.");
+            }
+
+            if (password != null) {
+                this.password = password.toString();
+            } else {
+                throw new NullPointerException("No token AND no password is defined.");
+            }
+
+            DashboardAuthApi dashboardAuthApi = new DashboardAuthApi(this);
+            this.token = dashboardAuthApi.getToken(this.username, this.password);
         }
-        return Boolean.valueOf(strictSSL);
     }
 
     @Override
@@ -63,10 +70,4 @@ public class DashboardConfigProvider implements DashboardConfig, Serializable {
     public String getToken() {
         return token;
     }
-
-    @Override
-    public boolean isStrictSSL() {
-        return strictSSL;
-    }
-
 }

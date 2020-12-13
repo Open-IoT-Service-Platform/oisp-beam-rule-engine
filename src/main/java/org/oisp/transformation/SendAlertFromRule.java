@@ -21,7 +21,7 @@ public class SendAlertFromRule extends DoFn<Rule, Byte> {
     private static final Logger LOG = LogHelper.getLogger(PersistRulesTask.class);
     private final AlertsApi alertsApi;
 
-    public SendAlertFromRule(Config userConfig) {
+    public SendAlertFromRule(Config userConfig) throws InvalidDashboardResponseException {
         this(new DashboardAlertsApi(new DashboardConfigProvider(userConfig)));
     }
 

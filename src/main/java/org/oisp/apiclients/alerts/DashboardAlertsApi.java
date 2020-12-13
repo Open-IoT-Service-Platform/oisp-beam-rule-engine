@@ -43,21 +43,19 @@ public class DashboardAlertsApi implements AlertsApi, Serializable {
 
     private final String url;
     private final String token;
-    private DashboardConfigProvider config;
     private static final String PATH = "/v1/api/alerts";
     private List<RulesWithObservation> rulesWithObservations;
 
     private transient RestTemplate template;
 
     public DashboardAlertsApi(DashboardConfigProvider dashboardConfig) {
-        this(dashboardConfig, CustomRestTemplate.build(dashboardConfig).getRestTemplate());
+        this(dashboardConfig, CustomRestTemplate.build().getRestTemplate());
     }
 
     public DashboardAlertsApi(DashboardConfigProvider dashboardConfig, RestTemplate restTemplate) {
         token = dashboardConfig.getToken();
         url = dashboardConfig.getUrl() + PATH;
         template = restTemplate;
-        config = dashboardConfig;
     }
 
     private String getToken() {
@@ -117,6 +115,6 @@ public class DashboardAlertsApi implements AlertsApi, Serializable {
     private void readObject(ObjectInputStream o)
             throws IOException, ClassNotFoundException {
         o.defaultReadObject();
-        template = CustomRestTemplate.build(config).getRestTemplate();
+        template = CustomRestTemplate.build().getRestTemplate();
     }
 }

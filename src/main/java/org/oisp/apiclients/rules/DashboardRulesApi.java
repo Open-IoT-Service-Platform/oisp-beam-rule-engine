@@ -44,7 +44,6 @@ public class DashboardRulesApi implements RulesApi, Serializable {
 
     private final String url;
     private final String token;
-    private final DashboardConfig config;
     private static final String PATH = "/v1/api/";
     private static final String GET_COMPONENTS_RULES_PATH = "components/rules";
     private static final String UPDATE_RULES_PATH = "rules/synchronization_status/Sync";
@@ -55,14 +54,13 @@ public class DashboardRulesApi implements RulesApi, Serializable {
     private transient RestTemplate template;
 
     public DashboardRulesApi(DashboardConfig dashboardConfig) {
-        this(dashboardConfig, CustomRestTemplate.build(dashboardConfig).getRestTemplate());
+        this(dashboardConfig, CustomRestTemplate.build().getRestTemplate());
     }
 
     public DashboardRulesApi(DashboardConfig dashboardConfig, RestTemplate restTemplate) {
         token = dashboardConfig.getToken();
         url = dashboardConfig.getUrl() + PATH;
         template = restTemplate;
-        config = dashboardConfig;
     }
 
     @Override
@@ -125,6 +123,6 @@ public class DashboardRulesApi implements RulesApi, Serializable {
     private void readObject(ObjectInputStream o)
             throws IOException, ClassNotFoundException {
         o.defaultReadObject();
-        template = CustomRestTemplate.build(this.config).getRestTemplate();
+        template = CustomRestTemplate.build().getRestTemplate();
     }
 }

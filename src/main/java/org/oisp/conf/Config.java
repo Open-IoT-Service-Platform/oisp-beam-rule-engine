@@ -16,11 +16,10 @@ public class Config implements Serializable {
     public static final String KAFKA_TOPIC_OBSERVATION_PROPERTY = "KAFKA_OBSERVATIONS_TOPIC";
     public static final String DASHBOARD_TOKEN_PROPERTY = "DASHBOARD_TOKEN";
     public static final String DASHBOARD_URL_PROPERTY = "DASHBOARD_URL";
-    public static final String DASHBOARD_STRICT_SSL_VERIFICATION = "DASHBOARD_STRICT_SSL";
+    public static final String DASHBOARD_USERNAME_PROPERTY = "DASHBOARD_USERNAME";
+    public static final String DASHBOARD_PASSWORD_PROPERTY = "DASHBOARD_PASSWORD";
 
 
-    private static HbaseProperties hbase;
-    private static KerberosProperties kbr;
 
     private Map<String, Object> conf;
     Config() {
@@ -51,21 +50,5 @@ public class Config implements Serializable {
             result = null;
         }
         return result;
-    }
-
-    public static HbaseProperties getHbase() {
-        return hbase;
-    }
-
-    public static void setHbase(HbaseProperties hbase) {
-        Config.hbase = hbase;
-    }
-
-    public static KerberosProperties getKbr() {
-        return kbr;
-    }
-
-    public static void setKbr(KerberosProperties kbr) {
-        Config.kbr = kbr;
     }
 }

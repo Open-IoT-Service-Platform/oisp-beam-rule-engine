@@ -17,7 +17,8 @@
 
 package org.oisp.apiclients.rules;
 
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.apiclients.rules.model.ComponentRulesResponse;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Set;
 
 public interface RulesApi {
 
-    List<ComponentRulesResponse> getActiveComponentsRules(Boolean synced) throws InvalidDashboardResponseException;
-    void markRulesSynchronized(Set<String> rulesIds) throws InvalidDashboardResponseException;
+    List<ComponentRulesResponse> getActiveComponentsRules(Boolean synced) throws ApiFatalException, ApiNotAuthorizedException;
+    void markRulesSynchronized(Set<String> rulesIds) throws ApiFatalException, ApiNotAuthorizedException;
+    String refreshToken() throws ApiFatalException;
 }

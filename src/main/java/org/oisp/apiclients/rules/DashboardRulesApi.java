@@ -18,9 +18,10 @@
 package org.oisp.apiclients.rules;
 
 import org.oisp.apiclients.ApiClientHelper;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.apiclients.CustomRestTemplate;
 import org.oisp.apiclients.DashboardConfig;
-import org.oisp.apiclients.InvalidDashboardResponseException;
 import org.oisp.apiclients.rules.model.ComponentRulesResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -43,13 +44,15 @@ import java.io.IOException;
 public class DashboardRulesApi implements RulesApi, Serializable {
 
     private final String url;
-    private final String token;
+    private String token;
+    private DashboardConfig dashboardConfig;
     private static final String PATH = "/v1/api/";
     private static final String GET_COMPONENTS_RULES_PATH = "components/rules";
     private static final String UPDATE_RULES_PATH = "rules/synchronization_status/Sync";
 
     private static final String RULE_STATUS_NOT_SYNCHRONIZED = "NotSync";
     private static final String RULE_STATUS_SYNCHRONIZED = "Sync";
+    private static final String COULDNOTGETTOKEN = "Could not get token.";
 
     private transient RestTemplate template;
 
@@ -58,13 +61,14 @@ public class DashboardRulesApi implements RulesApi, Serializable {
     }
 
     public DashboardRulesApi(DashboardConfig dashboardConfig, RestTemplate restTemplate) {
-        token = dashboardConfig.getToken();
-        url = dashboardConfig.getUrl() + PATH;
+        this.dashboardConfig = dashboardConfig;
+        token = this.dashboardConfig.getToken();
+        url = this.dashboardConfig.getUrl() + PATH;
         template = restTemplate;
     }
 
     @Override
-    public List<ComponentRulesResponse> getActiveComponentsRules(Boolean synced) throws InvalidDashboardResponseException {
+    public List<ComponentRulesResponse> getActiveComponentsRules(Boolean synced) throws ApiFatalException, ApiNotAuthorizedException {
         HttpHeaders headers = ApiClientHelper.getHttpHeaders(getToken());
         HttpEntity req = new HttpEntity<>(createRuleRequest(synced), headers);
 
@@ -72,30 +76,34 @@ public class DashboardRulesApi implements RulesApi, Serializable {
             ParameterizedTypeReference<List<ComponentRulesResponse>> responseType = new ParameterizedTypeReference<List<ComponentRulesResponse>>() {
             };
             ResponseEntity<List<ComponentRulesResponse>> resp = template.exchange(getEndpoint(GET_COMPONENTS_RULES_PATH), HttpMethod.POST, req, responseType);
-
+            if (resp.getStatusCode() == HttpStatus.FORBIDDEN || resp.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new ApiNotAuthorizedException(COULDNOTGETTOKEN);
+            }
             if (resp.getStatusCode() != HttpStatus.OK) {
-                throw new InvalidDashboardResponseException("Invalid response on - " + resp.getStatusCode());
+                throw new ApiFatalException("Invalid response on - " + resp.getStatusCode());
             }
 
             return resp.getBody();
         } catch (RestClientException e) {
-            throw new InvalidDashboardResponseException("Unknown dashboard response error.", e);
+            throw new ApiFatalException("Unknown dashboard response error.", e);
         }
     }
 
     @Override
-    public void markRulesSynchronized(Set<String> rulesIds) throws InvalidDashboardResponseException {
+    public void markRulesSynchronized(Set<String> rulesIds) throws ApiFatalException, ApiNotAuthorizedException {
         HttpHeaders headers = ApiClientHelper.getHttpHeaders(getToken());
         HttpEntity req = new HttpEntity<>(rulesIds, headers);
 
         try {
             ResponseEntity<Void> resp = template.exchange(getEndpoint(UPDATE_RULES_PATH), HttpMethod.PUT, req, Void.class);
-
+            if (resp.getStatusCode() == HttpStatus.FORBIDDEN || resp.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new ApiNotAuthorizedException(COULDNOTGETTOKEN);
+            }
             if (resp.getStatusCode() != HttpStatus.OK) {
-                throw new InvalidDashboardResponseException("Invalid response when updating synchronization status - " + resp.getStatusCode());
+                throw new ApiFatalException("Invalid response when updating synchronization status - " + resp.getStatusCode());
             }
         } catch (RestClientException e) {
-            throw new InvalidDashboardResponseException("Unknown dashboard response error when updating synchronization status.", e);
+            throw new ApiFatalException("Unknown dashboard response error when updating synchronization status.", e);
         }
     }
 
@@ -111,6 +119,7 @@ public class DashboardRulesApi implements RulesApi, Serializable {
         return new RuleRequest(ruleStatus, syncStatus);
     }
 
+
     private String getEndpoint(String restMethod) {
         return url + restMethod;
     }
@@ -119,6 +128,11 @@ public class DashboardRulesApi implements RulesApi, Serializable {
         return token;
     }
 
+    @Override
+    public String refreshToken() throws ApiFatalException {
+        token = dashboardConfig.refreshToken();
+        return token;
+    }
 
     private void readObject(ObjectInputStream o)
             throws IOException, ClassNotFoundException {

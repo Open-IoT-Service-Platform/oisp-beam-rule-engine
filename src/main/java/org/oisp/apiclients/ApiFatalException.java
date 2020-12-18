@@ -15,12 +15,18 @@
  *
  */
 
-package org.oisp.apiclients.auth;
+package org.oisp.apiclients;
 
-import org.oisp.apiclients.ApiFatalException;
+public class ApiFatalException extends Exception {
+    public ApiFatalException(String message) {
+        super(message);
+    }
 
+    public ApiFatalException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-public interface AuthApi {
-
-    String getToken(String username, String password) throws ApiFatalException;
+    public ApiFatalException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -27,8 +27,9 @@ public class DashboardConfigProvider implements DashboardConfig, Serializable {
     private  String url;
     private  String username;
     private  String password;
+    private DashboardAuthApi dashboardAuthApi;
 
-    public DashboardConfigProvider(Config userConfig) throws InvalidDashboardResponseException {
+    public DashboardConfigProvider(Config userConfig) throws ApiFatalException, ApiNotAuthorizedException {
         Object token = userConfig.get(Config.DASHBOARD_TOKEN_PROPERTY);
         Object url = userConfig.get(Config.DASHBOARD_URL_PROPERTY);
         Object username = userConfig.get(Config.DASHBOARD_USERNAME_PROPERTY);
@@ -37,9 +38,10 @@ public class DashboardConfigProvider implements DashboardConfig, Serializable {
         if (url != null) {
             this.url = url.toString();
         } else {
-            throw new NullPointerException("Dashboard url is not defined");
+            throw new ApiFatalException("Dashboard url is not defined");
         }
 
+        dashboardAuthApi = new DashboardAuthApi(this);
         if (token != null) {
             this.token = token.toString();
         } else {
@@ -47,16 +49,16 @@ public class DashboardConfigProvider implements DashboardConfig, Serializable {
             if (username != null) {
                 this.username = username.toString();
             } else {
-                throw new NullPointerException("No token AND no username is defined.");
+                throw new ApiFatalException("No token AND no username is defined.");
             }
 
             if (password != null) {
                 this.password = password.toString();
             } else {
-                throw new NullPointerException("No token AND no password is defined.");
+                throw new ApiFatalException("No token AND no password is defined.");
             }
 
-            DashboardAuthApi dashboardAuthApi = new DashboardAuthApi(this);
+
             this.token = dashboardAuthApi.getToken(this.username, this.password);
         }
     }
@@ -69,5 +71,14 @@ public class DashboardConfigProvider implements DashboardConfig, Serializable {
     @Override
     public String getToken() {
         return token;
+    }
+
+    @Override
+    public String refreshToken() throws ApiFatalException {
+        if (this.username == null || this.password == null) {
+            throw new ApiFatalException("Cannot refresh. No username or password given.");
+        }
+        this.token = dashboardAuthApi.getToken(this.username, this.password);
+        return this.token;
     }
 }

@@ -17,7 +17,9 @@
 
 package org.oisp.apiclients.alerts;
 
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
+import org.oisp.apiclients.ApiNotFatalException;
 import org.oisp.collection.RulesWithObservation;
 
 import java.util.List;
@@ -25,5 +27,6 @@ import java.util.List;
 
 public interface AlertsApi {
 
-    void pushAlert(List<RulesWithObservation> rulesWithObservation) throws InvalidDashboardResponseException;
+    void pushAlert(List<RulesWithObservation> rulesWithObservation) throws ApiFatalException, ApiNotAuthorizedException, ApiNotFatalException;
+    String refreshToken() throws ApiFatalException, ApiNotAuthorizedException;
 }

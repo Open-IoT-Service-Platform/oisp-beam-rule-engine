@@ -1,8 +1,10 @@
 package org.oisp.transformation;
 
 import org.apache.beam.sdk.transforms.DoFn;
+import org.oisp.apiclients.ApiNotFatalException;
 import org.oisp.apiclients.DashboardConfigProvider;
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.apiclients.alerts.AlertsApi;
 import org.oisp.apiclients.alerts.DashboardAlertsApi;
 import org.oisp.collection.Observation;
@@ -21,7 +23,7 @@ public class SendAlertFromRule extends DoFn<Rule, Byte> {
     private static final Logger LOG = LogHelper.getLogger(PersistRulesTask.class);
     private final AlertsApi alertsApi;
 
-    public SendAlertFromRule(Config userConfig) throws InvalidDashboardResponseException {
+    public SendAlertFromRule(Config userConfig) throws ApiFatalException, ApiNotAuthorizedException {
         this(new DashboardAlertsApi(new DashboardConfigProvider(userConfig)));
     }
 
@@ -30,7 +32,7 @@ public class SendAlertFromRule extends DoFn<Rule, Byte> {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(ProcessContext c) throws ApiNotAuthorizedException, ApiFatalException {
 
         Rule rule = c.element();
         //find the observation which triggered the Rule
@@ -43,11 +45,16 @@ public class SendAlertFromRule extends DoFn<Rule, Byte> {
             RulesWithObservation rWO = new RulesWithObservation(obs, Arrays.asList(rule));
             try {
                 alertsApi.pushAlert(Arrays.asList(rWO));
-            } catch (InvalidDashboardResponseException e) {
+            } catch (ApiNotFatalException e) {
                 LOG.error("Unable to send alerts for fulfilled rules", e);
+            } catch (ApiNotAuthorizedException e) {
+                try {
+                    alertsApi.refreshToken();
+                    alertsApi.pushAlert(Arrays.asList(rWO));
+                } catch (ApiNotFatalException e2) { //NotAuthorized exception a 2nd time will cancel the pipeline
+                    LOG.error("Ignoring error: ", e2);
+                }
             }
         }
-
-        //getContext().output(new Message(message, now()));
     }
 }

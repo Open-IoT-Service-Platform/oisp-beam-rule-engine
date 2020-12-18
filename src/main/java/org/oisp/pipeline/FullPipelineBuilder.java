@@ -26,7 +26,8 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import org.joda.time.Duration;
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.collection.RuleWithRuleConditions;
 import org.oisp.collection.RulesWithObservation;
 import org.oisp.conf.Config;
@@ -75,7 +76,7 @@ public final class FullPipelineBuilder {
         try {
             downloadRulesTask = new DownloadRulesTask(conf);
             persistRulesTask = new PersistRulesTask(conf);
-        } catch (InvalidDashboardResponseException e) {
+        } catch (ApiNotAuthorizedException | ApiFatalException e) {
             LOG.error("Cannot instantiate Dashboard connection of DownloadRulesTask or PersistRulesTask");
         }
         KafkaSourceProcessor rulesKafka = new KafkaSourceRulesUpdateProcessor(conf);
@@ -107,7 +108,7 @@ public final class FullPipelineBuilder {
         try {
             getComponentRulesTask = new GetComponentRulesTask(conf, kafkaSideInput);
             sendAlertFromRule = new SendAlertFromRule(conf);
-        } catch (InvalidDashboardResponseException e) {
+        } catch (ApiFatalException | ApiNotAuthorizedException e) {
             LOG.error("Could not instantiate dashboard relationship for getComponentRulesTask or sendAlertFromRule");
         }
 

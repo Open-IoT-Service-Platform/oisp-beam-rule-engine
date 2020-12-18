@@ -23,9 +23,11 @@ public interface DashboardConfig {
     String DASHBOARD_TOKEN_PROPERTY = "DASHBOARD_TOKEN";
     String DASHBOARD_URL_PROPERTY = "DASHBOARD_URL";
     String DASHBOARD_STRICT_SSL_VERIFICATION = "DASHBOARD_STRICT_SSL";
+    Integer RULENOTACTIVESTATUSCODE = 420;
 
     String getUrl();
 
     String getToken();
+    String refreshToken() throws ApiFatalException;
 
 }

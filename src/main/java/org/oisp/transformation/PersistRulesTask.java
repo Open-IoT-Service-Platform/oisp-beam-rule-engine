@@ -23,7 +23,8 @@ import org.apache.beam.sdk.state.ValueState;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
 import org.oisp.apiclients.DashboardConfigProvider;
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.apiclients.rules.DashboardRulesApi;
 import org.oisp.apiclients.rules.RulesApi;
 import org.oisp.collection.Rule;
@@ -45,7 +46,7 @@ public class PersistRulesTask extends DoFn<KV<String, Map<String, List<Rule>>>, 
     private final RulesApi rulesApi;
     private static final Logger LOG = LogHelper.getLogger(PersistRulesTask.class);
 
-    public PersistRulesTask(Config userConfig) throws InvalidDashboardResponseException {
+    public PersistRulesTask(Config userConfig) throws ApiFatalException, ApiNotAuthorizedException {
         this(new DashboardRulesApi(new DashboardConfigProvider(userConfig)));
     }
 
@@ -54,23 +55,29 @@ public class PersistRulesTask extends DoFn<KV<String, Map<String, List<Rule>>>, 
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c, @DoFn.StateId("counter") ValueState<Long> state) {
+    public void processElement(ProcessContext c, @DoFn.StateId("counter") ValueState<Long> state) throws ApiFatalException {
         LOG.info("Persisting dashboard rules...");
-        try {
-            Map<String, List<Rule>> rules = c.element().getValue();
-            Long counter = state.read();
-            if (counter == null) {
-                counter = 0L;
-            }
-            if (!isRulesEmpty(rules)) {
-                rulesApi.markRulesSynchronized(getRulesIds(rules.values()));
-            }
-            counter++;
-            state.write(counter);
-            c.output(counter);
-        } catch (InvalidDashboardResponseException e) {
-            LOG.error("Unable to mark persisted rules as synchronized in Dashboard", e);
+        Map<String, List<Rule>> rules = c.element().getValue();
+        Long counter = state.read();
+        if (counter == null) {
+            counter = 0L;
         }
+        if (!isRulesEmpty(rules)) {
+            try {
+                rulesApi.markRulesSynchronized(getRulesIds(rules.values()));
+            } catch (ApiNotAuthorizedException e) {
+                rulesApi.refreshToken();
+                try {
+                    rulesApi.markRulesSynchronized(getRulesIds(rules.values()));
+                } catch (ApiNotAuthorizedException e2) {
+                    throw new ApiFatalException("Could not mark rules as synchronized");
+                }
+            }
+        }
+        counter++;
+        state.write(counter);
+        c.output(counter);
+
     }
 
     private Set<String> getRulesIds(Collection<List<Rule>> ruleCollection) {

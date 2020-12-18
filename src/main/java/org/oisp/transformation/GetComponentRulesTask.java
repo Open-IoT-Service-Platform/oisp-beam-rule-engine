@@ -22,7 +22,8 @@ import org.apache.beam.sdk.transforms.DoFn;
 
 import org.apache.beam.sdk.values.PCollectionView;
 import org.oisp.apiclients.DashboardConfigProvider;
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
 import org.oisp.apiclients.rules.DashboardRulesApi;
 import org.oisp.apiclients.rules.RulesApi;
 import org.oisp.apiclients.rules.model.ComponentRulesResponse;
@@ -51,31 +52,28 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
     private Long componentRuleversion;
 
     @Setup
-    public void setup() {
+    public void setup() throws ApiFatalException, ApiNotAuthorizedException {
         System.out.println("Setup of Transform.");
         updateComponentRules();
         componentRuleversion = 0L;
     }
 
-    public GetComponentRulesTask(Config userConfig, PCollectionView<List<Long>> sideInput) throws InvalidDashboardResponseException {
-        //this(new RulesHbaseRepository(userConfig));
+    public GetComponentRulesTask(Config userConfig, PCollectionView<List<Long>> sideInput) throws ApiFatalException, ApiNotAuthorizedException {
         rulesApi = new DashboardRulesApi(new DashboardConfigProvider(userConfig));
         this.sideInput = sideInput;
     }
 
-    private void updateComponentRules() {
+    private void updateComponentRules() throws ApiFatalException, ApiNotAuthorizedException {
         try {
             componentsRules = getComponentsRules();
-        } catch (InvalidDashboardResponseException e) {
-            LOG.error("Error during updating rules - ", e);
+        } catch (ApiNotAuthorizedException e) {
+            rulesApi.refreshToken();
+            componentsRules = getComponentsRules();
         }
     }
-    /*public GetComponentRulesTask(RulesRepository rulesRepository) {
-        this.rulesRepository = rulesRepository;
-    }*/
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(ProcessContext c) throws ApiFatalException {
         try {
             observations = c.element();
             //check componentRuleversion/sequence number to trigger rules update if needed
@@ -85,7 +83,11 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
                     .reduce((ver, accum) -> ver > accum ? ver : accum)
                     .get();
             if (newComponentRuleVersion != componentRuleversion) {
-                updateComponentRules();
+                try {
+                    updateComponentRules();
+                } catch (ApiNotAuthorizedException e) { //NotAuthorized exception a 2nd time will cancel the pipeline
+                    rulesApi.refreshToken();
+                }
                 componentRuleversion = newComponentRuleVersion;
             }
             c.output(getActiveObservations());
@@ -118,7 +120,7 @@ public class GetComponentRulesTask extends DoFn<List<Observation>, List<RulesWit
         return rulesWithObservation.getRules() != null && rulesWithObservation.getRules().size() > 0;
     }
 
-    private Map<String, List<Rule>> getComponentsRules() throws InvalidDashboardResponseException {
+    private Map<String, List<Rule>> getComponentsRules() throws ApiFatalException, ApiNotAuthorizedException {
         List<ComponentRulesResponse> componentsRules = rulesApi.getActiveComponentsRules(true);
         RuleParser ruleParser = new RuleParser(componentsRules);
         Map<String, List<Rule>> result = ruleParser.getComponentRules();

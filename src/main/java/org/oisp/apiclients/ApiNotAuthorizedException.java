@@ -15,12 +15,18 @@
  *
  */
 
-package org.oisp.apiclients.auth;
+package org.oisp.apiclients;
 
-import org.oisp.apiclients.ApiFatalException;
+public class ApiNotAuthorizedException extends Exception {
+    public ApiNotAuthorizedException(String message) {
+        super(message);
+    }
 
+    public ApiNotAuthorizedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-public interface AuthApi {
-
-    String getToken(String username, String password) throws ApiFatalException;
+    public ApiNotAuthorizedException(Throwable cause) {
+        super(cause);
+    }
 }

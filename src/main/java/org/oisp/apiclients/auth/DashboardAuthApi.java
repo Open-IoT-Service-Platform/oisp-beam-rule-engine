@@ -19,7 +19,7 @@ package org.oisp.apiclients.auth;
 
 import org.oisp.apiclients.CustomRestTemplate;
 import org.oisp.apiclients.DashboardConfigProvider;
-import org.oisp.apiclients.InvalidDashboardResponseException;
+import org.oisp.apiclients.ApiFatalException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -51,7 +51,7 @@ public class DashboardAuthApi implements AuthApi, Serializable {
     }
 
     @Override
-    public String getToken(String username, String password) throws InvalidDashboardResponseException {
+    public String getToken(String username, String password) throws ApiFatalException {
 
         //HttpHeaders headers = ApiClientHelper.getHttpHeaders(config.getToken());
         HttpEntity req = new HttpEntity<>(createGetTokenBody(username, password), null);
@@ -60,10 +60,10 @@ public class DashboardAuthApi implements AuthApi, Serializable {
         try {
             resp = template.exchange(config.getUrl() + PATH + POSTTOKEN, HttpMethod.POST, req, AuthResponse.class);
             if (resp.getStatusCode() != HttpStatus.OK) {
-                throw new InvalidDashboardResponseException("Invalid response - " + resp.getStatusCode());
+                throw new ApiFatalException("Invalid response - " + resp.getStatusCode());
             }
         } catch (RestClientException e) {
-            throw new InvalidDashboardResponseException("Unknown dashboard response error.", e);
+            throw new ApiFatalException("Unknown dashboard response error.", e);
         }
         return resp.getBody().getToken();
     }

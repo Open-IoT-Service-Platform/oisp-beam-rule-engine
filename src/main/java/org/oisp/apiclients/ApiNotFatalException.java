@@ -17,16 +17,16 @@
 
 package org.oisp.apiclients;
 
-public class InvalidDashboardResponseException extends Exception {
-    public InvalidDashboardResponseException(String message) {
+public class ApiNotFatalException extends Exception {
+    public ApiNotFatalException(String message) {
         super(message);
     }
 
-    public InvalidDashboardResponseException(String message, Throwable cause) {
+    public ApiNotFatalException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidDashboardResponseException(Throwable cause) {
+    public ApiNotFatalException(Throwable cause) {
         super(cause);
     }
 }

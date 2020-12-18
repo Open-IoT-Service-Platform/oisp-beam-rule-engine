@@ -18,9 +18,12 @@
 package org.oisp.apiclients.alerts;
 
 import org.oisp.apiclients.ApiClientHelper;
+import org.oisp.apiclients.ApiFatalException;
+import org.oisp.apiclients.ApiNotAuthorizedException;
+import org.oisp.apiclients.ApiNotFatalException;
 import org.oisp.apiclients.CustomRestTemplate;
+import org.oisp.apiclients.DashboardConfig;
 import org.oisp.apiclients.DashboardConfigProvider;
-import org.oisp.apiclients.InvalidDashboardResponseException;
 import org.oisp.collection.Observation;
 import org.oisp.collection.Rule;
 import org.oisp.collection.RulesWithObservation;
@@ -29,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -42,7 +46,8 @@ import java.util.List;
 public class DashboardAlertsApi implements AlertsApi, Serializable {
 
     private final String url;
-    private final String token;
+    private String token;
+    private DashboardConfig dashboardConfig;
     private static final String PATH = "/v1/api/alerts";
     private List<RulesWithObservation> rulesWithObservations;
 
@@ -53,8 +58,9 @@ public class DashboardAlertsApi implements AlertsApi, Serializable {
     }
 
     public DashboardAlertsApi(DashboardConfigProvider dashboardConfig, RestTemplate restTemplate) {
-        token = dashboardConfig.getToken();
-        url = dashboardConfig.getUrl() + PATH;
+        this.dashboardConfig = dashboardConfig;
+        token = this.dashboardConfig.getToken();
+        url = this.dashboardConfig.getUrl() + PATH;
         template = restTemplate;
     }
 
@@ -63,19 +69,26 @@ public class DashboardAlertsApi implements AlertsApi, Serializable {
     }
 
     @Override
-    public void pushAlert(List<RulesWithObservation> rulesWithObservation) throws InvalidDashboardResponseException {
+    public void pushAlert(List<RulesWithObservation> rulesWithObservation) throws ApiFatalException, ApiNotAuthorizedException, ApiNotFatalException {
         this.rulesWithObservations = rulesWithObservation;
 
         HttpHeaders headers = ApiClientHelper.getHttpHeaders(getToken());
         HttpEntity req = new HttpEntity<>(createAlertBody(), headers);
-
         try {
             ResponseEntity<String> resp = template.exchange(url, HttpMethod.POST, req, String.class);
-            if (resp.getStatusCode() != HttpStatus.OK) {
-                throw new InvalidDashboardResponseException("Invalid response - " + resp.getStatusCode());
+            if (resp.getStatusCode() == HttpStatus.FORBIDDEN || resp.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new ApiNotAuthorizedException("Could not get token.");
             }
+            if (resp.getStatusCode() != HttpStatus.OK) {
+                throw new ApiFatalException("Invalid response - " + resp.getStatusCode());
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getRawStatusCode() == dashboardConfig.RULENOTACTIVESTATUSCODE) {
+                throw new ApiNotFatalException("Rule no longer active - sync problem, no need to repeat.");
+            }
+            throw new ApiFatalException("General HTTPClient exception: ", e);
         } catch (RestClientException e) {
-            throw new InvalidDashboardResponseException("Unknown dashboard response error.", e);
+            throw new ApiFatalException("General REST client exception: ", e);
         }
     }
 
@@ -110,6 +123,12 @@ public class DashboardAlertsApi implements AlertsApi, Serializable {
         List<Condition> alertConditions = new ArrayList<>();
         alertConditions.add(new Condition(observation));
         return alertConditions;
+    }
+
+    @Override
+    public String refreshToken() throws ApiFatalException, ApiNotAuthorizedException {
+        token = dashboardConfig.refreshToken();
+        return token;
     }
 
     private void readObject(ObjectInputStream o)

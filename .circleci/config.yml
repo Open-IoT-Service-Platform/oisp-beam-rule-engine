@@ -125,8 +125,13 @@ commands:
             make import-images DOCKER_TAG=test DEBUG=true
             npm install nodemailer
             export NODOCKERLOGIN=true
-            make deploy-oisp-test DOCKER_TAG=test
-            make test
+            retval=2;
+            until [ ${retval} -eq 0 ]; do
+              make undeploy-oisp
+              make deploy-oisp-test DOCKER_TAG=test
+              make test
+              retval=$?
+            done
 jobs:
   e2e-test:
     executor: vm-executor

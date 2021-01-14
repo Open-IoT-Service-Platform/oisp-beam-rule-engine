@@ -118,6 +118,7 @@ commands:
     steps:
       - run:
           name: Execute E2E test
+          no_output_timeout: 20m
           shell: /bin/bash
           command: |
             cd platform-launcher

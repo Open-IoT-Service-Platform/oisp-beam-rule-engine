@@ -22,12 +22,12 @@
 
   <groupId>org.oisp</groupId>
   <artifactId>rule-engine</artifactId>
-  <version>0.1</version>
+  <version>0.1.1</version>
 
   <packaging>jar</packaging>
 
   <properties>
-    <beam.version>2.16.0</beam.version>
+    <beam.version>2.21.0</beam.version>
 
     <bigquery.version>v2-rev374-1.22.0</bigquery.version>
     <google-clients.version>1.22.0</google-clients.version>
@@ -334,7 +334,7 @@
       <dependencies>
         <dependency>
           <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-flink-1.7</artifactId>
+          <artifactId>beam-runners-flink-1.10</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>
@@ -570,12 +570,6 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.3.6</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <version>1.4.4</version>
     </dependency>
 
   </dependencies>

@@ -81,7 +81,7 @@ commands:
               CLONE_BRANCH=$(echo $GITHUBDATA | jq '.head.ref' | tr -d '"')
               echo Detected Pull Request with clone REPO ${CLONE_REPO} and branch ${CLONE_BRANCH}
             fi
-            cd platform-launcher
+            cd platform-launcher/oisp-services
             rm -rf ${CIRCLE_PROJECT_REPONAME}
             git clone ${CLONE_REPO}
             cd ${CIRCLE_PROJECT_REPONAME}
@@ -118,6 +118,7 @@ commands:
     steps:
       - run:
           name: Execute E2E test
+          no_output_timeout: 20m
           shell: /bin/bash
           command: |
             cd platform-launcher
@@ -125,8 +126,13 @@ commands:
             make import-images DOCKER_TAG=test DEBUG=true
             npm install nodemailer
             export NODOCKERLOGIN=true
-            make deploy-oisp-test DOCKER_TAG=test
-            make test
+            retval=2;
+            until [ ${retval} -eq 0 ]; do
+              make undeploy-oisp
+              make deploy-oisp-test DOCKER_TAG=test
+              make test
+              retval=$?
+            done
 jobs:
   e2e-test:
     executor: vm-executor

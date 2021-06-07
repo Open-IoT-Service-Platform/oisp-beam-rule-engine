@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.GenerateSequence;
-import org.apache.beam.sdk.io.kafka.KafkaIO;
 import org.apache.beam.sdk.io.kafka.KafkaRecord;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -23,7 +22,6 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.beam.sdk.values.PCollectionView;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import org.joda.time.Duration;
 import org.oisp.apiclients.ApiFatalException;
@@ -136,20 +134,6 @@ public final class FullPipelineBuilder {
                 .apply(ParDo.of(new PersistRuleState()))
                 .apply(ParDo.of(new CheckRuleFulfillment()))
                 .apply(ParDo.of(sendAlertFromRule));
-
-        //Heartbeat Pipeline
-        //Send regular Heartbeat to Kafka topic
-        String serverUri = conf.get(Config.KAFKA_URI_PROPERTY).toString();
-        System.out.println("serverUri:" + serverUri);
-        p.apply(GenerateSequence.from(0).withRate(1, Duration.standardSeconds(1)))
-                .apply(ParDo.of(new StringToKVFn()))
-                .apply(KafkaIO.<String, String>write()
-                        .withBootstrapServers(serverUri)
-                        .withTopic("heartbeat")
-                        .withKeySerializer(StringSerializer.class)
-                        .withValueSerializer(StringSerializer.class));
-
-
 
         return p;
     }

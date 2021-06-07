@@ -22,12 +22,12 @@
 
   <groupId>org.oisp</groupId>
   <artifactId>rule-engine</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
 
   <packaging>jar</packaging>
 
   <properties>
-    <beam.version>2.21.0</beam.version>
+    <beam.version>2.28.0</beam.version>
 
     <bigquery.version>v2-rev374-1.22.0</bigquery.version>
     <google-clients.version>1.22.0</google-clients.version>
@@ -66,7 +66,7 @@
     <repository>
       <id>maven1-repo</id>
       <name>maven1-repo</name>
-      <url>http://repo1.maven.org/maven2</url>
+      <url>https://repo1.maven.org/maven2</url>
     </repository>
 
 
@@ -334,7 +334,7 @@
       <dependencies>
         <dependency>
           <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-flink-1.10</artifactId>
+          <artifactId>beam-runners-flink-1.12</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>
